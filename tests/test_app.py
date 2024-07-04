@@ -27,6 +27,54 @@ def test_create_user(client):
     }
 
 
+def test_create_user_username_exists(client):
+    response = client.post(
+        "/users/",
+        json={
+            "username": "alice",
+            "email": "alice@example.com",
+            "password": "secret",
+        },
+    )
+    response = client.post(
+        "/users/",
+        json={
+            "username": "alice",
+            "email": "alice2@example.com",
+            "password": "secret",
+        },
+    )
+
+    assert response.status_code == HTTPStatus.BAD_REQUEST
+    assert response.json() == {
+        'detail': 'Username already exists'
+    }
+
+
+def test_create_user_email_exists(client):
+    response_email = client.post(
+        "/users/",
+        json={
+            "username": "alice",
+            "email": "alice@example.com",
+            "password": "secret",
+        },
+    )
+    response_email = client.post(
+        "/users/",
+        json={
+            "username": "keles",
+            "email": "alice@example.com",
+            "password": "secret",
+        },
+    )
+
+    assert response_email.status_code == HTTPStatus.BAD_REQUEST
+    assert response_email.json() == {
+        'detail': 'Email already exists'
+    }
+
+
 def test_read_users(client):
     response = client.get("/users")
     assert response.status_code == HTTPStatus.OK
@@ -57,7 +105,29 @@ def test_update_user(client, user):
     }
 
 
+def test_update_user_not_found(client, user):
+    response = client.put(
+        "/users/2",
+        json={
+            "username": "bob",
+            "email": "bob@example.com",
+            "password": "mynewpassword",
+        },
+    )
+    assert response.json() == {
+        'detail': 'User not found'
+    }
+
+
 def test_delete_user(client, user):
     response = client.delete("/users/1")
 
     assert response.json() == {"message": "User deleted"}
+
+
+def test_delete_user_not_found(client, user):
+    response = client.delete("/users/2")
+
+    assert response.json() == {
+        'detail': 'User not found'
+    }
