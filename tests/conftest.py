@@ -1,4 +1,5 @@
 import factory
+import factory.fuzzy
 import pytest
 from fastapi.testclient import TestClient
 from sqlalchemy import create_engine
@@ -7,7 +8,7 @@ from sqlalchemy.pool import StaticPool
 
 from fast_zero.app import app
 from fast_zero.database import get_session
-from fast_zero.models import User, table_registry
+from fast_zero.models import Todo, TodoState, User, table_registry
 from fast_zero.security import get_password_hash
 
 
@@ -20,7 +21,17 @@ class UserFactory(factory.Factory):
     password = factory.LazyAttribute(lambda obj: f"{obj.username}+senha")
 
 
-@pytest.fixture
+class TodoFactory(factory.Factory):
+    class Meta:
+        model = Todo
+
+    title = factory.Faker("text")
+    description = factory.Faker("text")
+    state = factory.fuzzy.FuzzyChoice(TodoState)
+    user_id = 1
+
+
+@pytest.fixture()
 def client(session):
     def get_session_override():
         return session
@@ -32,7 +43,7 @@ def client(session):
     app.dependency_overrides.clear()
 
 
-@pytest.fixture
+@pytest.fixture()
 def session():
     engine = create_engine(
         "sqlite:///:memory:",
@@ -47,7 +58,7 @@ def session():
     table_registry.metadata.drop_all(engine)
 
 
-@pytest.fixture
+@pytest.fixture()
 def user(session):
     pwd = "testtest"
 
@@ -62,7 +73,7 @@ def user(session):
     return user
 
 
-@pytest.fixture
+@pytest.fixture()
 def other_user(session):
     user = UserFactory()
     session.add(user)
@@ -72,7 +83,7 @@ def other_user(session):
     return user
 
 
-@pytest.fixture
+@pytest.fixture()
 def token(client, user):
     response = client.post(
         "/auth/token",
