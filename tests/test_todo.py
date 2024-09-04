@@ -115,10 +115,7 @@ def test_list_todos_state_should_return_5_todos(
 
 
 def test_list_todos_combined_should_return_5_todos(
-    session,
-    user,
-    client,
-    token,
+    session, user, client, token
 ):
     expected_todos = 5
     session.bulk_save_objects(
@@ -133,7 +130,7 @@ def test_list_todos_combined_should_return_5_todos(
     session.bulk_save_objects(
         TodoFactory.create_batch(
             3,
-            user_id=3,
+            user_id=user.id,
             title="Other title",
             description="Other description",
             state=TodoState.todo,
@@ -160,7 +157,9 @@ def test_delete_todo(session, client, user, token):
     )
 
     assert response.status_code == HTTPStatus.OK
-    assert response.json() == {"message": "Task has been deleted successfully"}
+    assert response.json() == {
+        "message": "Task has been deleted successfully."
+    }
 
 
 def test_delete_todo_error(client, token):
@@ -169,7 +168,7 @@ def test_delete_todo_error(client, token):
     )
 
     assert response.status_code == HTTPStatus.NOT_FOUND
-    assert response.json() == {"detail": "Task not Found."}
+    assert response.json() == {"detail": "Task not found."}
 
 
 def test_patch_todo_error(client, token):
@@ -179,7 +178,7 @@ def test_patch_todo_error(client, token):
         headers={"Authorization": f"Bearer {token}"},
     )
     assert response.status_code == HTTPStatus.NOT_FOUND
-    assert response.json() == {"detail": "Task not Found"}
+    assert response.json() == {"detail": "Task not found."}
 
 
 def test_patch_todo(session, client, user, token):

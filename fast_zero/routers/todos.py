@@ -1,12 +1,12 @@
 from http import HTTPStatus
 from typing import Annotated
 
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from fast_zero.database import get_session
-from fast_zero.models import Todo, TodoState, User
+from fast_zero.models import Todo, User
 from fast_zero.schemas import (
     Message,
     TodoList,
@@ -16,20 +16,21 @@ from fast_zero.schemas import (
 )
 from fast_zero.security import get_current_user
 
-router = APIRouter(prefix="/todos", tags=["todos"])
+router = APIRouter()
 
 Session = Annotated[Session, Depends(get_session)]
-
 CurrentUser = Annotated[User, Depends(get_current_user)]
+
+router = APIRouter(prefix="/todos", tags=["todos"])
 
 
 @router.post("/", response_model=TodoPublic)
 def create_todo(
     todo: TodoSchema,
-    session: Session,  # pyright: ignore
     user: CurrentUser,
+    session: Session,
 ):
-    db_todo = Todo(
+    db_todo: Todo = Todo(
         title=todo.title,
         description=todo.description,
         state=todo.state,
@@ -44,13 +45,13 @@ def create_todo(
 
 @router.get("/", response_model=TodoList)
 def list_todos(  # noqa
-    session: Session,  # pyright: ignore
+    session: Session,
     user: CurrentUser,
-    title: str | None = None,
-    description: str | None = None,
-    state: TodoState | None = None,
-    offset: int | None = None,
-    limit: int | None = None,
+    title: str = Query(None),
+    description: str = Query(None),
+    state: str = Query(None),
+    offset: int = Query(None),
+    limit: int = Query(None),
 ):
     query = select(Todo).where(Todo.user_id == user.id)
 
@@ -68,28 +69,9 @@ def list_todos(  # noqa
     return {"todos": todos}
 
 
-@router.delete("/{todo_id}", response_model=Message)
-def delete_todo(todo_id: int, session: Session, user: CurrentUser):  # pyright: ignore
-    todo = session.scalar(
-        select(Todo).where(Todo.user_id == user.id, Todo.id == todo_id)
-    )
-
-    if not todo:
-        raise HTTPException(
-            status_code=HTTPStatus.NOT_FOUND, detail="Task not Found."
-        )
-    session.delete(todo)
-    session.commit()
-
-    return {"message": "Task has been deleted successfully"}
-
-
 @router.patch("/{todo_id}", response_model=TodoPublic)
 def patch_todo(
-    todo_id: int,
-    session: Session,  # pyright: ignore
-    user: CurrentUser,
-    todo: TodoUpdate,
+    todo_id: int, session: Session, user: CurrentUser, todo: TodoUpdate
 ):
     db_todo = session.scalar(
         select(Todo).where(Todo.user_id == user.id, Todo.id == todo_id)
@@ -97,13 +79,31 @@ def patch_todo(
 
     if not db_todo:
         raise HTTPException(
-            status_code=HTTPStatus.NOT_FOUND, detail="Task not Found"
+            status_code=HTTPStatus.NOT_FOUND, detail="Task not found."
         )
+
     for key, value in todo.model_dump(exclude_unset=True).items():
         setattr(db_todo, key, value)
 
-        session.add(db_todo)
-        session.commit()
-        session.refresh(db_todo)
+    session.add(db_todo)
+    session.commit()
+    session.refresh(db_todo)
 
-        return db_todo
+    return db_todo
+
+
+@router.delete("/{todo_id}", response_model=Message)
+def delete_todo(todo_id: int, session: Session, user: CurrentUser):
+    todo = session.scalar(
+        select(Todo).where(Todo.user_id == user.id, Todo.id == todo_id)
+    )
+
+    if not todo:
+        raise HTTPException(
+            status_code=HTTPStatus.NOT_FOUND, detail="Task not found."
+        )
+
+    session.delete(todo)
+    session.commit()
+
+    return {"message": "Task has been deleted successfully."}
