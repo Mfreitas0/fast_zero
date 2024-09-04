@@ -10,7 +10,6 @@ jobs:
       - name: Copia os arquivos do repositorio
         uses: actions/checkout@v3
 
-
       - name: Instalar o Python
         uses: actions/setup-python@v5
         with:
@@ -21,3 +20,6 @@ jobs:
 
       - name: Instalar Dependencias
         run: poetry install
+
+      - name: Executar testes
+        run: poetry run task test
