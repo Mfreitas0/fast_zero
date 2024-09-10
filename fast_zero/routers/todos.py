@@ -45,7 +45,7 @@ def create_todo(
 
 @router.get("/", response_model=TodoList)
 def list_todos(  # noqa
-    session: Session,
+    session: Session,  # pyright: ignore
     user: CurrentUser,
     title: str = Query(None),
     description: str = Query(None),
