@@ -81,4 +81,4 @@ pytest
 
 ## Licença
 
-Este projeto está licenciado sob a licença MIT - veja o arquivo LICENSE para mais detalhes.
+Este projeto está licenciado sob a licença GPL-3.0 - veja o arquivo LICENSE para mais detalhes.
