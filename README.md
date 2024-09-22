@@ -30,7 +30,7 @@ Para a construção do projeto, utilizaremos:
 
 Este projeto está disponível online através do Fly.io. Você pode acessar a API clicando no link abaixo:
 
-[Gerenciador de Tarefas no Fly.io](https://fastzeroapp-0001.fly.dev)
+[Gerenciador de Tarefas no Fly.io](https://fastzeroapp-0001.fly.dev/docs)
 
 ## Instalação e Execução
 
